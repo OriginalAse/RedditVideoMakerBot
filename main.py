@@ -1,5 +1,6 @@
 #!/usr/bin/env python
 import math
+import os
 import sys
 from os import name, path
 from pathlib import Path
@@ -24,6 +25,10 @@ from video_creation.final_video import make_final_video
 from video_creation.screenshot_downloader import get_screenshots_of_reddit_posts
 from video_creation.voices import save_text_to_mp3
 from utils.ffmpeg_install import ffmpeg_install
+
+from json import load, dump
+
+from video_creation.final_video import subReddit, videoFile
 
 __VERSION__ = "3.2"
 
@@ -70,6 +75,7 @@ def run_many(times) -> None:
         Popen("cls" if name == "nt" else "clear", shell=True).wait()
 
 
+
 def shutdown() -> NoReturn:
     if "redditid" in globals():
         print_markdown("## Clearing temp files")
@@ -90,12 +96,21 @@ if __name__ == "__main__":
     )
     config is False and sys.exit()
 
-    if not path.isfile(f"{directory}\\video_creation\\data\client_secret.json"):
+    secret_path = f"{directory}\\video_creation\\data\client_secret.json"
+    if not path.isfile(secret_path):
         print_substep(
             "Please drag and drop your client_secret file from the google console into video_creation/data folder!",
             "bold red"
         )
         sys.exit()
+
+    with open(secret_path, 'r+') as f:
+        data = load(f)
+        data['installed']['redirect_uris'] = "urn:ietf:wg:oauth:2.0:oob"
+        f.seek(0)
+        dump(data, f, indent=4)
+        f.truncate()
+
     if (
         not settings.config["settings"]["tts"]["tiktok_sessionid"]
         or settings.config["settings"]["tts"]["tiktok_sessionid"] == ""
@@ -116,10 +131,12 @@ if __name__ == "__main__":
                 )
                 main(post_id)
                 Popen("cls" if name == "nt" else "clear", shell=True).wait()
+                os.remove(f"{Path().absolute()}\\results\\{subReddit}\\{videoFile}")
         elif config["settings"]["times_to_run"]:
             run_many(config["settings"]["times_to_run"])
         else:
             main()
+            os.remove(f"{Path().absolute()}\\results\\{subReddit}\\{videoFile}")
     except KeyboardInterrupt:
         shutdown()
     except ResponseException:

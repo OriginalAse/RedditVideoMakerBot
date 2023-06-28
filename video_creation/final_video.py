@@ -1,6 +1,7 @@
 import multiprocessing
 import os
 import re
+import sys
 from os.path import exists  # Needs to be imported specifically
 from pathlib import Path
 from typing import Final
@@ -25,8 +26,12 @@ import tempfile
 import threading
 import time
 
+from json import load, dump
+
 console = Console()
 
+subReddit = None
+videoFile = None
 
 class ProgressFfmpeg(threading.Thread):
     def __init__(self, vid_duration_seconds, progress_update_callback):
@@ -148,14 +153,29 @@ def upload_video(subreddit, video_file):
     }
 
     media_file = MediaFileUpload(f'{Path().absolute()}\\results\\{subreddit}\\{video_file}')
+    global subReddit
+    subReddit = subreddit
 
-    service.videos().insert(
-        part='snippet,status',
-        body=request_body,
-        media_body=media_file
-    ).execute()
+    global videoFile
+    videoFile = video_file
+    try:
+        service.videos().insert(
+            part='snippet,status',
+            body=request_body,
+            media_body=media_file
+        ).execute()
+        print_step("Uploaded video to youtube!")
+    except:
+        print_substep("You've either exceeded your quota or your credentials are incorrect!", "bold red")
+        file = f"{Path().absolute()}\\video_creation\\data\\videos.json"
 
-    print_step("Uploaded video to youtube!")
+        with open(file, "r+") as f:
+            data = load(f)
+            data.pop()
+            f.seek(0)
+            dump(data, f, indent=4)
+            f.truncate()
+
 
 
 
