@@ -1,7 +1,7 @@
 #!/usr/bin/env python
 import math
 import sys
-from os import name
+from os import name, path
 from pathlib import Path
 from subprocess import Popen
 from typing import NoReturn
@@ -89,7 +89,13 @@ if __name__ == "__main__":
         f"{directory}/utils/.config.template.toml", f"{directory}/config.toml"
     )
     config is False and sys.exit()
-        
+
+    if not path.isfile(f"{directory}\\video_creation\\data\client_secret.json"):
+        print_substep(
+            "Please drag and drop your client_secret file from the google console into video_creation/data folder!",
+            "bold red"
+        )
+        sys.exit()
     if (
         not settings.config["settings"]["tts"]["tiktok_sessionid"]
         or settings.config["settings"]["tts"]["tiktok_sessionid"] == ""

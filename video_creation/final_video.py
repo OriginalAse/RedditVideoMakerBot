@@ -2,6 +2,7 @@ import multiprocessing
 import os
 import re
 from os.path import exists  # Needs to be imported specifically
+from pathlib import Path
 from typing import Final
 from typing import Tuple, Any, Dict
 
@@ -16,6 +17,9 @@ from utils.console import print_step, print_substep
 from utils.thumbnail import create_thumbnail
 from utils.videos import save_data
 from utils import settings
+
+from googleapiclient.http import MediaFileUpload
+from .google_apis import create_service
 
 import tempfile
 import threading
@@ -123,6 +127,36 @@ def merge_background_audio(audio: ffmpeg, reddit_id: str):
         # Merges audio and background_audio
         merged_audio = ffmpeg.filter([audio, bg_audio], "amix", duration="longest")
         return merged_audio  # Return merged audio
+
+def upload_video(subreddit, video_file):
+    API_NAME = 'youtube'
+    API_VERSION = 'v3'
+    SCOPES = ['https://www.googleapis.com/auth/youtube']
+    client_file = f'{Path().absolute()}\\video_creation\\data\\client_secret.json'
+    service = create_service(client_file, API_NAME, API_VERSION, SCOPES)
+
+    request_body = {
+        'snippet': {
+            'title': '#reddit #askreddit #redditstories #rslash #shorts #trending',
+            'description': '#reddit #askreddit #redditstories #rslash #shorts #trending',
+            'tags': ['shorts', 'askreddit', 'funny', 'trending', 'video', 'relatable']
+        },
+        'status': {
+            'privacyStatus': 'public',
+            'selfDeclaredMadeForKids': False
+        },
+    }
+
+    media_file = MediaFileUpload(f'{Path().absolute()}\\results\\{subreddit}\\{video_file}')
+
+    service.videos().insert(
+        part='snippet,status',
+        body=request_body,
+        media_body=media_file
+    ).execute()
+
+    print_step("Uploaded video to youtube!")
+
 
 
 def make_final_video(
@@ -429,3 +463,4 @@ def make_final_video(
     cleanups = cleanup(reddit_id)
     print_substep(f"Removed {cleanups} temporary files 🗑")
     print_step("Done! 🎉 The video is in the results folder 📁")
+    upload_video(subreddit, filename + ".mp4")
