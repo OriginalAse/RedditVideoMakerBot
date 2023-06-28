@@ -140,11 +140,13 @@ def upload_video(subreddit, video_file):
     client_file = f'{Path().absolute()}\\video_creation\\data\\client_secret.json'
     service = create_service(client_file, API_NAME, API_VERSION, SCOPES)
 
+    subreddit_tag = subreddit.lower()
+
     request_body = {
         'snippet': {
-            'title': '#reddit #askreddit #redditstories #rslash #shorts #trending',
-            'description': '#reddit #askreddit #redditstories #rslash #shorts #trending',
-            'tags': ['shorts', 'askreddit', 'funny', 'trending', 'video', 'relatable']
+            'title': f'#reddit #{subreddit_tag} #redditstories #rslash #shorts #trending',
+            'description': f'#reddit #{subreddit_tag} #redditstories #rslash #shorts #trending',
+            'tags': ['shorts', subreddit_tag, 'funny', 'trending', 'video', 'relatable', 'reddit']
         },
         'status': {
             'privacyStatus': 'public',
